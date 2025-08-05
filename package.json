@@ -1,0 +1,47 @@
+{
+  "name": "universal-pdf-generator",
+  "version": "1.0.0",
+  "description": "A powerful and flexible PDF generator for exams, documents, and reports with smart pagination and progress tracking",
+  "main": "src/index.js",
+  "module": "src/index.js",
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "echo \"Tests will be added in future versions\" && exit 0",
+    "lint": "echo \"Linting will be added in future versions\" && exit 0",
+    "prepublishOnly": "echo \"Ready to publish\"",
+    "docs": "echo \"Documentation generation will be added\" && exit 0"
+  },
+  "keywords": [
+    "pdf",
+    "generator",
+    "exam",
+    "document",
+    "jspdf",
+    "html2canvas",
+    "pagination",
+    "progress",
+    "chinese",
+    "education"
+  ],
+  "author": "Peter <782120844@qq.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pandabanya/universal-pdf-generator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pandabanya/universal-pdf-generator/issues"
+  },
+  "homepage": "https://github.com/pandabanya/universal-pdf-generator#readme",
+  "peerDependencies": {
+    "jspdf": "^2.5.0",
+    "html2canvas": "^1.4.0"
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  }
+}

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal PDF Generator - 基础示例</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .demo-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+        }
+        .demo-section h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .progress-text {
+            text-align: center;
+            margin: 10px 0;
+            color: #7f8c8d;
+        }
+        .example-data {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Universal PDF Generator 示例</h1>
+        <p>这个页面展示了如何使用Universal PDF Generator生成不同类型的PDF文档。</p>
+
+        <!-- 基础文档示例 -->
+        <div class="demo-section">
+            <h2>📄 基础文档生成</h2>
+            <p>生成一个简单的HTML文档PDF。</p>
+            <button onclick="generateBasicPDF()">生成基础PDF</button>
+            <button onclick="downloadLastPDF()" id="downloadBasic" disabled>下载PDF</button>
+        </div>
+
+        <!-- 考试试卷示例 -->
+        <div class="demo-section">
+            <h2>📝 考试试卷生成</h2>
+            <p>生成包含单选题、多选题和判断题的考试试卷。</p>
+            <button onclick="generateExamPDF()">生成试卷PDF</button>
+            <button onclick="downloadLastPDF()" id="downloadExam" disabled>下载试卷</button>
+            
+            <h4>示例数据结构：</h4>
+            <div class="example-data" id="examDataExample"></div>
+        </div>
+
+        <!-- 数据报告示例 -->
+        <div class="demo-section">
+            <h2>📊 数据报告生成</h2>
+            <p>生成包含图表和数据表格的分析报告。</p>
+            <button onclick="generateReportPDF()">生成报告PDF</button>
+            <button onclick="downloadLastPDF()" id="downloadReport" disabled>下载报告</button>
+        </div>
+
+        <!-- 进度显示 -->
+        <div class="demo-section">
+            <h2>⚡ 生成进度</h2>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">等待开始...</div>
+        </div>
+
+        <!-- PDF预览区域 -->
+        <div class="demo-section">
+            <h2>👁️ PDF预览</h2>
+            <iframe id="pdfPreview" style="width: 100%; height: 500px; border: 1px solid #ddd;" src="about:blank"></iframe>
+        </div>
+    </div>
+
+    <!-- 引入依赖 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- 引入我们的库 (开发时使用本地构建版本) -->
+    <script src="../dist/index.umd.js"></script>
+
+    <script>
+        let currentGenerator = null;
+        let currentPdfUrl = null;
+
+        // 进度更新函数
+        function updateProgress(progress, message) {
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            progressFill.style.width = progress + '%';
+            progressText.textContent = `${progress}% - ${message}`;
+        }
+
+        // 显示PDF预览
+        function showPreview(pdfUrl) {
+            currentPdfUrl = pdfUrl;
+            document.getElementById('pdfPreview').src = pdfUrl;
+            
+            // 启用下载按钮
+            document.querySelectorAll('[id^="download"]').forEach(btn => {
+                btn.disabled = false;
+            });
+        }
+
+        // 生成基础PDF
+        async function generateBasicPDF() {
+            try {
+                updateProgress(0, '开始生成基础PDF...');
+                
+                const { PDFGenerator } = UniversalPDFGenerator;
+                currentGenerator = new PDFGenerator({
+                    progressCallback: updateProgress
+                });
+
+                const content = {
+                    metadata: {
+                        title: '基础文档示例',
+                        author: 'Universal PDF Generator'
+                    },
+                    body: `
+                        <h1 style="color: #2c3e50; text-align: center;">基础文档示例</h1>
+                        <h2 style="color: #34495e;">欢迎使用 Universal PDF Generator</h2>
+                        <p>这是一个基础的PDF文档示例，展示了如何使用我们的库生成PDF文件。</p>
+                        
+                        <h3>主要特性</h3>
+                        <ul>
+                            <li>🚀 智能分页处理</li>
+                            <li>📊 实时进度跟踪</li>
+                            <li>🎨 丰富的模板支持</li>
+                            <li>🌐 完美的中文支持</li>
+                            <li>⚡ 高性能渲染</li>
+                        </ul>
+
+                        <h3>使用场景</h3>
+                        <p>Universal PDF Generator 适用于以下场景：</p>
+                        <ol>
+                            <li><strong>教育领域</strong>：生成考试试卷、学习资料</li>
+                            <li><strong>企业办公</strong>：制作报告、合同、说明书</li>
+                            <li><strong>数据分析</strong>：生成图表报告、统计文档</li>
+                            <li><strong>个人使用</strong>：制作简历、证书等</li>
+                        </ol>
+
+                        <blockquote style="background: #f8f9fa; padding: 15px; border-left: 4px solid #3498db; margin: 20px 0;">
+                            <p style="margin: 0; font-style: italic;">
+                                "Universal PDF Generator 让PDF生成变得简单而强大！"
+                            </p>
+                        </blockquote>
+
+                        <p style="text-align: center; margin-top: 40px; color: #7f8c8d;">
+                            感谢使用 Universal PDF Generator ❤️
+                        </p>
+                    `
+                };
+
+                const pdfUrl = await currentGenerator.generatePDF(content);
+                showPreview(pdfUrl);
+                
+            } catch (error) {
+                console.error('生成PDF失败:', error);
+                updateProgress(0, '生成失败: ' + error.message);
+            }
+        }
+
+        // 生成考试试卷PDF
+        async function generateExamPDF() {
+            try {
+                updateProgress(0, '开始生成考试试卷...');
+                
+                const { ExamGenerator } = UniversalPDFGenerator;
+                currentGenerator = new ExamGenerator({
+                    progressCallback: updateProgress
+                });
+
+                const examData = {
+                    title: 'JavaScript基础知识测试',
+                    instructions: '请仔细阅读题目，选择最佳答案。考试时间90分钟。',
+                    singleQuestions: [
+                        {
+                            questionId: 1,
+                            questionName: '1. JavaScript是什么类型的语言？',
+                            questionOptions: JSON.stringify([
+                                { key: 'A', title: '编译型语言' },
+                                { key: 'B', title: '解释型语言' },
+                                { key: 'C', title: '汇编语言' },
+                                { key: 'D', title: '机器语言' }
+                            ])
+                        },
+                        {
+                            questionId: 2,
+                            questionName: '2. 下列哪个关键字用于声明变量？',
+                            questionOptions: JSON.stringify([
+                                { key: 'A', title: 'variable' },
+                                { key: 'B', title: 'var' },
+                                { key: 'C', title: 'string' },
+                                { key: 'D', title: 'int' }
+                            ])
+                        }
+                    ],
+                    multipleQuestions: [
+                        {
+                            questionId: 3,
+                            questionName: '1. 以下哪些是JavaScript的数据类型？',
+                            questionOptions: JSON.stringify([
+                                { key: 'A', title: 'string' },
+                                { key: 'B', title: 'number' },
+                                { key: 'C', title: 'boolean' },
+                                { key: 'D', title: 'integer' }
+                            ])
+                        }
+                    ],
+                    judgeQuestions: [
+                        {
+                            questionId: 4,
+                            questionName: '1. JavaScript是一种面向对象的编程语言。'
+                        },
+                        {
+                            questionId: 5,
+                            questionName: '2. var和let声明变量的作用域相同。'
+                        }
+                    ],
+                    singleCount: 2,
+                    multipleCount: 1,
+                    judgeCount: 2,
+                    singleScore: 3,
+                    multipleScore: 4,
+                    judgeScore: 2
+                };
+
+                const pdfUrl = await currentGenerator.generateExamPDF(examData);
+                showPreview(pdfUrl);
+                
+            } catch (error) {
+                console.error('生成试卷失败:', error);
+                updateProgress(0, '生成失败: ' + error.message);
+            }
+        }
+
+        // 生成数据报告PDF
+        async function generateReportPDF() {
+            try {
+                updateProgress(0, '开始生成数据报告...');
+                
+                const { ReportGenerator } = UniversalPDFGenerator;
+                currentGenerator = new ReportGenerator({
+                    progressCallback: updateProgress
+                });
+
+                const reportData = {
+                    title: '2023年第四季度销售分析报告',
+                    summary: '本报告详细分析了公司在2023年第四季度的销售表现，包括收入增长、市场占有率和客户满意度等关键指标。',
+                    sections: [
+                        {
+                            title: '执行摘要',
+                            description: '关键数据概览',
+                            data: {
+                                metrics: [
+                                    { title: '总销售额', value: '¥2,456,789', description: '同比增长18.5%' },
+                                    { title: '新客户', value: '1,234', description: '环比增长12%' },
+                                    { title: '客户满意度', value: '94.2%', description: '较上季度提升2.1%' },
+                                    { title: '市场份额', value: '15.8%', description: '行业排名第3' }
+                                ]
+                            }
+                        },
+                        {
+                            title: '月度销售数据',
+                            description: '各月份销售详情对比',
+                            data: {
+                                table: {
+                                    headers: ['月份', '销售额(万元)', '订单数', '增长率', '客户数'],
+                                    rows: [
+                                        ['10月', '82.4', '1,856', '+15.2%', '734'],
+                                        ['11月', '91.7', '2,134', '+18.9%', '823'],
+                                        ['12月', '101.5', '2,456', '+23.1%', '891']
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            title: '产品分析',
+                            description: '主要产品线表现分析',
+                            data: {
+                                list: [
+                                    {
+                                        title: '产品A - 企业版软件',
+                                        description: '销售额占比35%，客户续费率达到92%，是公司主要营收来源。'
+                                    },
+                                    {
+                                        title: '产品B - 标准版软件',
+                                        description: '销售额占比28%，新客户转化率良好，市场接受度持续提升。'
+                                    },
+                                    {
+                                        title: '产品C - 定制服务',
+                                        description: '销售额占比22%，利润率最高，主要服务于大型企业客户。'
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                };
+
+                const pdfUrl = await currentGenerator.generateReportPDF(reportData);
+                showPreview(pdfUrl);
+                
+            } catch (error) {
+                console.error('生成报告失败:', error);
+                updateProgress(0, '生成失败: ' + error.message);
+            }
+        }
+
+        // 下载PDF
+        function downloadLastPDF() {
+            if (currentGenerator && currentPdfUrl) {
+                const filename = `universal-pdf-${new Date().getTime()}.pdf`;
+                currentGenerator.downloadPDF(filename);
+            } else {
+                alert('请先生成PDF文档');
+            }
+        }
+
+        // 显示示例数据
+        document.getElementById('examDataExample').textContent = `{
+  title: '考试标题',
+  singleQuestions: [
+    {
+      questionId: 1,
+      questionName: '题目内容',
+      questionOptions: JSON.stringify([
+        { key: 'A', title: '选项A' },
+        { key: 'B', title: '选项B' },
+        { key: 'C', title: '选项C' },
+        { key: 'D', title: '选项D' }
+      ])
+    }
+  ],
+  // ... 更多题目
+}`;
+    </script>
+</body>
+</html> 

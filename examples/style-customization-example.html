@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>样式定制化试卷生成示例</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 15px;
+        }
+        .control-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .control-group {
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .control-group h3 {
+            color: #007bff;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        .form-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+        .form-row label {
+            min-width: 80px;
+            font-size: 14px;
+            color: #555;
+        }
+        .form-row input, .form-row select {
+            flex: 1;
+            padding: 5px 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+        .button-group {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .btn.secondary {
+            background-color: #6c757d;
+        }
+        .btn.secondary:hover {
+            background-color: #545b62;
+        }
+        .theme-btn {
+            padding: 8px 16px;
+            margin: 3px;
+            font-size: 12px;
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-bar {
+            width: 0%;
+            height: 25px;
+            background-color: #007bff;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .preview-section {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+        }
+        .preview-title {
+            color: #007bff;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        .current-styles {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🎨 样式定制化试卷生成器</h1>
+        
+        <div class="control-panel">
+            <!-- 字体设置 -->
+            <div class="control-group">
+                <h3>📝 字体设置</h3>
+                <div class="form-row">
+                    <label>主字体:</label>
+                    <select id="primaryFont">
+                        <option value="'SimSun', serif">宋体 (SimSun)</option>
+                        <option value="'SimHei', sans-serif">黑体 (SimHei)</option>
+                        <option value="'Microsoft YaHei', sans-serif">微软雅黑</option>
+                        <option value="'Times New Roman', serif">Times New Roman</option>
+                        <option value="'Arial', sans-serif">Arial</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label>标题字体:</label>
+                    <select id="titleFont">
+                        <option value="'SimHei', sans-serif">黑体 (SimHei)</option>
+                        <option value="'SimSun', serif">宋体 (SimSun)</option>
+                        <option value="'Microsoft YaHei', sans-serif">微软雅黑</option>
+                        <option value="'Times New Roman', serif">Times New Roman</option>
+                        <option value="'Arial', sans-serif">Arial</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 字号设置 -->
+            <div class="control-group">
+                <h3>📏 字号设置</h3>
+                <div class="form-row">
+                    <label>基础字号:</label>
+                    <input type="number" id="baseFontSize" value="11" min="8" max="20" step="0.5">
+                    <span>pt</span>
+                </div>
+                <div class="form-row">
+                    <label>标题字号:</label>
+                    <input type="number" id="titleFontSize" value="20" min="14" max="28" step="0.5">
+                    <span>pt</span>
+                </div>
+                <div class="form-row">
+                    <label>章节字号:</label>
+                    <input type="number" id="sectionFontSize" value="16" min="12" max="24" step="0.5">
+                    <span>pt</span>
+                </div>
+                <div class="form-row">
+                    <label>题目字号:</label>
+                    <input type="number" id="questionFontSize" value="11" min="8" max="18" step="0.5">
+                    <span>pt</span>
+                </div>
+            </div>
+
+            <!-- 边距设置 -->
+            <div class="control-group">
+                <h3>📐 页面边距</h3>
+                <div class="form-row">
+                    <label>上边距:</label>
+                    <input type="number" id="marginTop" value="20" min="10" max="50" step="1">
+                    <span>mm</span>
+                </div>
+                <div class="form-row">
+                    <label>下边距:</label>
+                    <input type="number" id="marginBottom" value="25" min="10" max="50" step="1">
+                    <span>mm</span>
+                </div>
+                <div class="form-row">
+                    <label>左边距:</label>
+                    <input type="number" id="marginLeft" value="15" min="10" max="40" step="1">
+                    <span>mm</span>
+                </div>
+                <div class="form-row">
+                    <label>右边距:</label>
+                    <input type="number" id="marginRight" value="15" min="10" max="40" step="1">
+                    <span>mm</span>
+                </div>
+            </div>
+
+            <!-- 字体粗细设置 -->
+            <div class="control-group">
+                <h3>💪 字体粗细</h3>
+                <div class="form-row">
+                    <label>标题粗细:</label>
+                    <select id="titleFontWeight">
+                        <option value="normal">正常</option>
+                        <option value="bold" selected>粗体</option>
+                        <option value="600">中粗</option>
+                        <option value="700">重粗</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label>章节粗细:</label>
+                    <select id="sectionFontWeight">
+                        <option value="normal">正常</option>
+                        <option value="bold" selected>粗体</option>
+                        <option value="600">中粗</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label>题号粗细:</label>
+                    <select id="questionNumberWeight">
+                        <option value="normal">正常</option>
+                        <option value="bold" selected>粗体</option>
+                        <option value="600">中粗</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label>题目粗细:</label>
+                    <select id="questionWeight">
+                        <option value="normal" selected>正常</option>
+                        <option value="bold">粗体</option>
+                        <option value="500">中等</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 间距设置 -->
+            <div class="control-group">
+                <h3>📏 间距设置</h3>
+                <div class="form-row">
+                    <label>章节间距:</label>
+                    <input type="number" id="sectionMargin" value="35" min="20" max="60" step="5">
+                    <span>px</span>
+                </div>
+                <div class="form-row">
+                    <label>题目间距:</label>
+                    <input type="number" id="questionMargin" value="15" min="10" max="30" step="1">
+                    <span>px</span>
+                </div>
+                <div class="form-row">
+                    <label>选项间距:</label>
+                    <input type="number" id="optionMargin" value="5" min="2" max="15" step="1">
+                    <span>px</span>
+                </div>
+            </div>
+
+            <!-- 颜色设置 -->
+            <div class="control-group">
+                <h3>🎨 颜色设置</h3>
+                <div class="form-row">
+                    <label>主色调:</label>
+                    <input type="color" id="primaryColor" value="#333333">
+                </div>
+                <div class="form-row">
+                    <label>副色调:</label>
+                    <input type="color" id="secondaryColor" value="#666666">
+                </div>
+                <div class="form-row">
+                    <label>强调色:</label>
+                    <input type="color" id="accentColor" value="#007bff">
+                </div>
+            </div>
+        </div>
+
+        <!-- 预设主题 -->
+        <div class="control-group" style="margin-bottom: 20px;">
+            <h3>🎭 预设主题</h3>
+            <div class="button-group">
+                <button class="btn theme-btn" onclick="applyTheme('classic')">经典主题</button>
+                <button class="btn theme-btn" onclick="applyTheme('modern')">现代主题</button>
+                <button class="btn theme-btn" onclick="applyTheme('minimal')">简约主题</button>
+                <button class="btn theme-btn" onclick="applyTheme('academic')">学术主题</button>
+                <button class="btn secondary theme-btn" onclick="resetToDefault()">重置默认</button>
+            </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="button-group">
+            <button class="btn" onclick="applyCustomStyles()">🎨 应用自定义样式</button>
+            <button class="btn" onclick="generateStyledPDF()">🚀 生成样式化试卷</button>
+            <button class="btn secondary" onclick="previewCurrentStyles()">👁️ 预览当前样式</button>
+            <button class="btn secondary" onclick="exportStyleConfig()">📤 导出样式配置</button>
+        </div>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar">0%</div>
+        </div>
+
+        <div id="result" class="result"></div>
+
+        <!-- 当前样式预览 -->
+        <div class="preview-section">
+            <div class="preview-title">📋 当前样式配置预览</div>
+            <div class="current-styles" id="currentStyles">
+                点击"预览当前样式"查看配置...
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入PDF生成器 -->
+    <script type="module">
+        import { ExamGenerator, StyleManager } from '../src/index.js';
+        
+        // 全局变量
+        window.examGenerator = null;
+        window.sampleExamData = {
+            title: "样式定制示例试卷",
+            subject: "数学测试",
+            author: "测试系统",
+            instructions: "请认真答题，注意时间分配。本试卷用于展示不同样式效果。",
+            singleQuestions: [
+                {
+                    questionId: "Q001",
+                    questionName: "函数 f(x) = 2x + 1 在 x = 3 时的函数值是？",
+                    questionOptions: JSON.stringify([
+                        { key: "A", title: "5" },
+                        { key: "B", title: "7" },
+                        { key: "C", title: "9" },
+                        { key: "D", title: "11" }
+                    ])
+                },
+                {
+                    questionId: "Q002",
+                    questionName: "一个圆的半径是 5cm，它的面积是多少？",
+                    questionOptions: JSON.stringify([
+                        { key: "A", title: "25π cm²" },
+                        { key: "B", title: "50π cm²" },
+                        { key: "C", title: "10π cm²" },
+                        { key: "D", title: "15π cm²" }
+                    ])
+                }
+            ],
+            judgeQuestions: [
+                {
+                    questionId: "T001",
+                    questionName: "0 是自然数。"
+                },
+                {
+                    questionId: "T002", 
+                    questionName: "负数没有绝对值。"
+                }
+            ]
+        };
+        
+        // 初始化
+        function initializeGenerator() {
+            window.examGenerator = new ExamGenerator({
+                progressCallback: updateProgress
+            });
+        }
+        
+        // 更新进度条
+        function updateProgress(progress, message) {
+            const container = document.getElementById('progressContainer');
+            const bar = document.getElementById('progressBar');
+            
+            container.style.display = 'block';
+            bar.style.width = progress + '%';
+            bar.textContent = progress + '%';
+            
+            if (progress >= 100) {
+                setTimeout(() => {
+                    container.style.display = 'none';
+                }, 2000);
+            }
+        }
+        
+        // 显示结果
+        function showResult(message, isError = false) {
+            const result = document.getElementById('result');
+            result.textContent = message;
+            result.className = `result ${isError ? 'error' : 'success'}`;
+            result.style.display = 'block';
+            
+            setTimeout(() => {
+                result.style.display = 'none';
+            }, 5000);
+        }
+        
+        // 获取当前表单值
+        function getCurrentFormValues() {
+            return {
+                primaryFont: document.getElementById('primaryFont').value,
+                titleFont: document.getElementById('titleFont').value,
+                baseFontSize: document.getElementById('baseFontSize').value,
+                titleFontSize: document.getElementById('titleFontSize').value,
+                sectionFontSize: document.getElementById('sectionFontSize').value,
+                questionFontSize: document.getElementById('questionFontSize').value,
+                marginTop: document.getElementById('marginTop').value,
+                marginBottom: document.getElementById('marginBottom').value,
+                marginLeft: document.getElementById('marginLeft').value,
+                marginRight: document.getElementById('marginRight').value,
+                titleFontWeight: document.getElementById('titleFontWeight').value,
+                sectionFontWeight: document.getElementById('sectionFontWeight').value,
+                questionNumberWeight: document.getElementById('questionNumberWeight').value,
+                questionWeight: document.getElementById('questionWeight').value,
+                sectionMargin: document.getElementById('sectionMargin').value,
+                questionMargin: document.getElementById('questionMargin').value,
+                optionMargin: document.getElementById('optionMargin').value,
+                primaryColor: document.getElementById('primaryColor').value,
+                secondaryColor: document.getElementById('secondaryColor').value,
+                accentColor: document.getElementById('accentColor').value
+            };
+        }
+        
+        // 应用自定义样式
+        window.applyCustomStyles = function() {
+            try {
+                if (!window.examGenerator) {
+                    initializeGenerator();
+                }
+                
+                const values = getCurrentFormValues();
+                
+                // 设置字体
+                window.examGenerator.setFont({
+                    primary: { family: values.primaryFont },
+                    secondary: { family: values.titleFont }
+                });
+                
+                // 设置字号
+                window.examGenerator.setFontSize({
+                    base: values.baseFontSize + 'pt',
+                    title: values.titleFontSize + 'pt',
+                    sectionTitle: values.sectionFontSize + 'pt',
+                    question: values.questionFontSize + 'pt',
+                    option: values.questionFontSize + 'pt'
+                });
+                
+                // 设置边距
+                window.examGenerator.setMargins({
+                    top: parseInt(values.marginTop),
+                    bottom: parseInt(values.marginBottom),
+                    left: parseInt(values.marginLeft),
+                    right: parseInt(values.marginRight)
+                });
+                
+                // 设置字体粗细
+                window.examGenerator.setFontWeight({
+                    title: values.titleFontWeight,
+                    sectionTitle: values.sectionFontWeight,
+                    questionNumber: values.questionNumberWeight,
+                    question: values.questionWeight
+                });
+                
+                // 设置间距
+                window.examGenerator.setSpacing({
+                    sectionMargin: values.sectionMargin + 'px',
+                    questionMargin: values.questionMargin + 'px',
+                    optionMargin: values.optionMargin + 'px 0'
+                });
+                
+                // 设置颜色
+                window.examGenerator.setColors({
+                    primary: values.primaryColor,
+                    secondary: values.secondaryColor,
+                    accent: values.accentColor
+                });
+                
+                showResult('✅ 样式配置已应用！');
+                
+            } catch (error) {
+                showResult(`❌ 样式应用失败: ${error.message}`, true);
+                console.error('样式应用失败:', error);
+            }
+        };
+        
+        // 生成样式化PDF
+        window.generateStyledPDF = async function() {
+            try {
+                if (!window.examGenerator) {
+                    initializeGenerator();
+                }
+                
+                // 先应用当前样式
+                applyCustomStyles();
+                
+                showResult('正在生成样式化PDF，请稍候...');
+                
+                const pdfUrl = await window.examGenerator.generateExamPDF(window.sampleExamData);
+                
+                // 在新窗口中打开PDF
+                window.open(pdfUrl, '_blank');
+                showResult('✅ 样式化PDF生成成功！已在新窗口中打开');
+                
+            } catch (error) {
+                showResult(`❌ 生成失败: ${error.message}`, true);
+                console.error('PDF生成失败:', error);
+            }
+        };
+        
+        // 应用主题
+        window.applyTheme = function(themeName) {
+            try {
+                if (!window.examGenerator) {
+                    initializeGenerator();
+                }
+                
+                window.examGenerator.applyTheme(themeName);
+                
+                // 更新表单值以反映主题设置
+                updateFormFromTheme(themeName);
+                
+                showResult(`✅ ${themeName} 主题已应用！`);
+                
+            } catch (error) {
+                showResult(`❌ 主题应用失败: ${error.message}`, true);
+            }
+        };
+        
+        // 根据主题更新表单
+        function updateFormFromTheme(themeName) {
+            const themes = StyleManager.getPresetThemes();
+            const theme = themes[themeName];
+            
+            if (!theme) return;
+            
+            // 更新字体
+            if (theme.fonts) {
+                if (theme.fonts.primary) {
+                    document.getElementById('primaryFont').value = theme.fonts.primary.family;
+                }
+                if (theme.fonts.secondary) {
+                    document.getElementById('titleFont').value = theme.fonts.secondary.family;
+                }
+            }
+            
+            // 更新字号
+            if (theme.text) {
+                if (theme.text.base && theme.text.base.fontSize) {
+                    document.getElementById('baseFontSize').value = parseInt(theme.text.base.fontSize);
+                }
+                if (theme.text.title && theme.text.title.fontSize) {
+                    document.getElementById('titleFontSize').value = parseInt(theme.text.title.fontSize);
+                }
+            }
+            
+            // 更新边距
+            if (theme.page && theme.page.margins) {
+                const margins = theme.page.margins;
+                if (margins.top) document.getElementById('marginTop').value = margins.top;
+                if (margins.bottom) document.getElementById('marginBottom').value = margins.bottom;
+                if (margins.left) document.getElementById('marginLeft').value = margins.left;
+                if (margins.right) document.getElementById('marginRight').value = margins.right;
+            }
+            
+            // 更新颜色
+            if (theme.colors) {
+                if (theme.colors.primary) document.getElementById('primaryColor').value = theme.colors.primary;
+                if (theme.colors.secondary) document.getElementById('secondaryColor').value = theme.colors.secondary;
+                if (theme.colors.accent) document.getElementById('accentColor').value = theme.colors.accent;
+            }
+        }
+        
+        // 重置为默认
+        window.resetToDefault = function() {
+            if (!window.examGenerator) {
+                initializeGenerator();
+            }
+            
+            window.examGenerator.resetStyles();
+            
+            // 重置表单
+            document.getElementById('primaryFont').value = "'SimSun', serif";
+            document.getElementById('titleFont').value = "'SimHei', sans-serif";
+            document.getElementById('baseFontSize').value = "11";
+            document.getElementById('titleFontSize').value = "20";
+            document.getElementById('sectionFontSize').value = "16";
+            document.getElementById('questionFontSize').value = "11";
+            document.getElementById('marginTop').value = "20";
+            document.getElementById('marginBottom').value = "25";
+            document.getElementById('marginLeft').value = "15";
+            document.getElementById('marginRight').value = "15";
+            document.getElementById('titleFontWeight').value = "bold";
+            document.getElementById('sectionFontWeight').value = "bold";
+            document.getElementById('questionNumberWeight').value = "bold";
+            document.getElementById('questionWeight').value = "normal";
+            document.getElementById('sectionMargin').value = "35";
+            document.getElementById('questionMargin').value = "15";
+            document.getElementById('optionMargin').value = "5";
+            document.getElementById('primaryColor').value = "#333333";
+            document.getElementById('secondaryColor').value = "#666666";
+            document.getElementById('accentColor').value = "#007bff";
+            
+            showResult('✅ 已重置为默认样式！');
+        };
+        
+        // 预览当前样式
+        window.previewCurrentStyles = function() {
+            try {
+                if (!window.examGenerator) {
+                    initializeGenerator();
+                }
+                
+                const currentStyles = window.examGenerator.getCurrentStyles();
+                const preview = document.getElementById('currentStyles');
+                preview.textContent = JSON.stringify(currentStyles, null, 2);
+                
+                showResult('✅ 样式配置已更新到预览区域！');
+                
+            } catch (error) {
+                showResult(`❌ 预览失败: ${error.message}`, true);
+            }
+        };
+        
+        // 导出样式配置
+        window.exportStyleConfig = function() {
+            try {
+                if (!window.examGenerator) {
+                    initializeGenerator();
+                }
+                
+                const styleConfig = window.examGenerator.getCurrentStyles();
+                const blob = new Blob([JSON.stringify(styleConfig, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'exam-style-config.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showResult('✅ 样式配置已导出！');
+                
+            } catch (error) {
+                showResult(`❌ 导出失败: ${error.message}`, true);
+            }
+        };
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeGenerator();
+        });
+    </script>
+</body>
+</html>

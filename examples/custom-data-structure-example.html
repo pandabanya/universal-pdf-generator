@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自定义数据结构试卷生成示例</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 15px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .section h3 {
+            color: #007bff;
+            margin-top: 0;
+        }
+        .code-block {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .button-group {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 0 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .btn.secondary {
+            background-color: #6c757d;
+        }
+        .btn.secondary:hover {
+            background-color: #545b62;
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .progress-bar {
+            width: 0%;
+            height: 25px;
+            background-color: #007bff;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .config-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .config-section {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">自定义数据结构试卷生成器示例</h1>
+        
+        <div class="section">
+            <h3>📝 功能说明</h3>
+            <p>本示例展示了如何使用自定义数据结构生成试卷PDF。你可以：</p>
+            <ul>
+                <li>使用完全自定义的字段名称</li>
+                <li>注册新的题目类型</li>
+                <li>自定义渲染方式</li>
+                <li>灵活配置数据结构映射</li>
+            </ul>
+        </div>
+
+        <div class="config-section">
+            <div class="section">
+                <h3>⚙️ 数据结构配置</h3>
+                <div class="code-block">
+                    <pre id="dataStructureConfig">{
+  "examFields": {
+    "title": "examTitle",
+    "subject": "subjectName", 
+    "author": "creator",
+    "instructions": "examInstructions"
+  },
+  "questionFields": {
+    "question": ["content", "questionText", "题目"],
+    "options": ["choices", "answers", "选项"],
+    "id": ["qid", "questionId", "编号"]
+  },
+  "questionTypes": {
+    "choice": {
+      "dataField": "choiceQuestions",
+      "title": "选择题",
+      "description": "（共 {count} 题，每题 {score} 分）",
+      "defaultScore": 5
+    }
+  }
+}</pre>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>📊 自定义数据示例</h3>
+                <div class="code-block">
+                    <pre id="customDataExample">{
+  "examTitle": "期中数学测试",
+  "subjectName": "高等数学",
+  "creator": "李教授",
+  "examInstructions": "请仔细阅读题目，认真答题",
+  "choiceQuestions": [
+    {
+      "qid": "Q001",
+      "content": "函数 f(x) = x² 的导数是？",
+      "choices": [
+        {"key": "A", "title": "x"},
+        {"key": "B", "title": "2x"},
+        {"key": "C", "title": "x²"},
+        {"key": "D", "title": "2x²"}
+      ]
+    },
+    {
+      "qid": "Q002", 
+      "content": "极限 lim(x→0) sin(x)/x 的值是？",
+      "choices": [
+        {"key": "A", "title": "0"},
+        {"key": "B", "title": "1"},
+        {"key": "C", "title": "∞"},
+        {"key": "D", "title": "不存在"}
+      ]
+    }
+  ]
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button class="btn" onclick="generateCustomPDF()">🚀 生成自定义试卷</button>
+            <button class="btn secondary" onclick="validateDataStructure()">✅ 验证数据结构</button>
+            <button class="btn secondary" onclick="previewStandardData()">👁️ 预览转换结果</button>
+        </div>
+
+        <div class="progress-container" id="progressContainer" style="display: none;">
+            <div class="progress-bar" id="progressBar">0%</div>
+        </div>
+
+        <div id="result" class="result"></div>
+
+        <div class="section">
+            <h3>🔧 高级功能示例</h3>
+            <div class="button-group">
+                <button class="btn secondary" onclick="registerCustomQuestionType()">注册填空题类型</button>
+                <button class="btn secondary" onclick="generateMultiTypeExam()">生成多题型试卷</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>📖 使用说明</h3>
+            <ol>
+                <li><strong>配置数据结构：</strong>定义字段映射关系，支持多个候选字段名</li>
+                <li><strong>准备数据：</strong>按照自定义结构准备试卷数据</li>
+                <li><strong>生成PDF：</strong>系统自动转换数据结构并生成试卷</li>
+                <li><strong>扩展功能：</strong>可注册自定义题目类型和渲染器</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- 引入PDF生成器 -->
+    <script type="module">
+        import { ExamGenerator, DataStructureMapper, QuestionRenderer } from '../src/index.js';
+        
+        // 全局变量
+        window.examGenerator = null;
+        window.customDataStructure = null;
+        window.customExamData = null;
+        
+        // 初始化
+        function initializeGenerator() {
+            const customConfig = JSON.parse(document.getElementById('dataStructureConfig').textContent);
+            
+            window.examGenerator = new ExamGenerator({
+                dataStructureConfig: customConfig,
+                progressCallback: updateProgress
+            });
+            
+            window.customExamData = JSON.parse(document.getElementById('customDataExample').textContent);
+        }
+        
+        // 更新进度条
+        function updateProgress(progress, message) {
+            const container = document.getElementById('progressContainer');
+            const bar = document.getElementById('progressBar');
+            
+            container.style.display = 'block';
+            bar.style.width = progress + '%';
+            bar.textContent = progress + '%';
+            
+            if (progress >= 100) {
+                setTimeout(() => {
+                    container.style.display = 'none';
+                }, 2000);
+            }
+        }
+        
+        // 显示结果
+        function showResult(message, isError = false) {
+            const result = document.getElementById('result');
+            result.textContent = message;
+            result.className = `result ${isError ? 'error' : 'success'}`;
+            result.style.display = 'block';
+            
+            setTimeout(() => {
+                result.style.display = 'none';
+            }, 5000);
+        }
+        
+        // 生成自定义PDF
+        window.generateCustomPDF = async function() {
+            try {
+                if (!window.examGenerator) {
+                    initializeGenerator();
+                }
+                
+                showResult('正在生成PDF，请稍候...');
+                
+                const pdfUrl = await window.examGenerator.generateExamPDF(window.customExamData);
+                
+                // 在新窗口中打开PDF
+                window.open(pdfUrl, '_blank');
+                showResult('✅ PDF生成成功！已在新窗口中打开');
+                
+            } catch (error) {
+                showResult(`❌ 生成失败: ${error.message}`, true);
+                console.error('PDF生成失败:', error);
+            }
+        };
+        
+        // 验证数据结构
+        window.validateDataStructure = function() {
+            try {
+                if (!window.examGenerator) {
+                    initializeGenerator();
+                }
+                
+                const validation = window.examGenerator.validateExamData(window.customExamData);
+                
+                if (validation.valid) {
+                    showResult('✅ 数据结构验证通过！');
+                } else {
+                    showResult(`❌ 数据结构验证失败: ${validation.errors.join('; ')}`, true);
+                }
+                
+            } catch (error) {
+                showResult(`❌ 验证失败: ${error.message}`, true);
+            }
+        };
+        
+        // 预览标准数据
+        window.previewStandardData = function() {
+            try {
+                if (!window.examGenerator) {
+                    initializeGenerator();
+                }
+                
+                const standardData = window.examGenerator.previewStandardData(window.customExamData);
+                
+                if (standardData) {
+                    console.log('转换后的标准数据结构:', standardData);
+                    showResult('✅ 数据转换成功！请查看浏览器控制台');
+                } else {
+                    showResult('❌ 数据转换失败', true);
+                }
+                
+            } catch (error) {
+                showResult(`❌ 预览失败: ${error.message}`, true);
+            }
+        };
+        
+        // 注册自定义题目类型
+        window.registerCustomQuestionType = function() {
+            try {
+                if (!window.examGenerator) {
+                    initializeGenerator();
+                }
+                
+                // 注册填空题类型
+                window.examGenerator.registerQuestionType('fill-blank', {
+                    dataField: 'fillQuestions',
+                    title: '填空题',
+                    description: '（共 {count} 题，每题 {score} 分）',
+                    defaultScore: 3,
+                    renderer: {
+                        render: (question, questionNumber, template) => {
+                            return `
+                                <div data-question-block style="margin-bottom: 15px;">
+                                    <div style="display: flex; align-items: flex-start; margin-bottom: 8px;">
+                                        <span style="font-weight: bold; margin-right: 6px;">${questionNumber}.</span>
+                                        <span style="flex: 1;">${question.question}</span>
+                                    </div>
+                                    <div style="margin-left: 25px; margin-top: 10px;">
+                                        <span style="border-bottom: 2px solid #333; display: inline-block; width: 200px; height: 20px;"></span>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                });
+                
+                showResult('✅ 填空题类型注册成功！');
+                
+            } catch (error) {
+                showResult(`❌ 注册失败: ${error.message}`, true);
+            }
+        };
+        
+        // 生成多题型试卷
+        window.generateMultiTypeExam = async function() {
+            try {
+                if (!window.examGenerator) {
+                    initializeGenerator();
+                }
+                
+                // 先注册填空题类型
+                window.registerCustomQuestionType();
+                
+                // 多题型数据
+                const multiTypeData = {
+                    examTitle: "综合能力测试",
+                    subjectName: "数学与逻辑",
+                    creator: "测试系统",
+                    examInstructions: "本试卷包含选择题和填空题，请认真作答",
+                    choiceQuestions: [
+                        {
+                            qid: "C001",
+                            content: "1 + 1 = ?",
+                            choices: [
+                                {"key": "A", "title": "1"},
+                                {"key": "B", "title": "2"},
+                                {"key": "C", "title": "3"}
+                            ]
+                        }
+                    ],
+                    fillQuestions: [
+                        {
+                            qid: "F001",
+                            content: "2 × 3 = ____"
+                        },
+                        {
+                            qid: "F002", 
+                            content: "sin(30°) = ____"
+                        }
+                    ]
+                };
+                
+                showResult('正在生成多题型试卷...');
+                
+                const pdfUrl = await window.examGenerator.generateExamPDF(multiTypeData);
+                window.open(pdfUrl, '_blank');
+                showResult('✅ 多题型试卷生成成功！');
+                
+            } catch (error) {
+                showResult(`❌ 生成失败: ${error.message}`, true);
+                console.error('多题型试卷生成失败:', error);
+            }
+        };
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeGenerator();
+        });
+    </script>
+</body>
+</html>

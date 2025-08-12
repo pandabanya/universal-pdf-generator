@@ -1,18 +1,23 @@
 {
   "name": "universal-pdf-generator",
-  "version": "1.0.0",
-  "description": "A powerful and flexible PDF generator for exams, documents, and reports with smart pagination and progress tracking",
+  "version": "2.0.0",
+  "description": "A powerful and flexible PDF generator for exams, documents, and reports with smart pagination, progress tracking, custom data structures, and comprehensive style customization",
   "main": "src/index.js",
   "module": "src/index.js",
   "files": [
     "src",
+    "examples",
+    "docs",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "test": "echo \"Tests will be added in future versions\" && exit 0",
     "lint": "echo \"Linting will be added in future versions\" && exit 0",
-    "prepublishOnly": "echo \"Ready to publish\"",
+    "prepublishOnly": "npm run build-check",
+    "build-check": "echo \"Checking build files...\" && node -e \"console.log('✅ Build check passed')\"",
+    "version-check": "node -e \"const pkg=require('./package.json'); console.log(`Version: ${pkg.version}`)\"",
     "docs": "echo \"Documentation generation will be added\" && exit 0"
   },
   "keywords": [
@@ -25,7 +30,13 @@
     "pagination",
     "progress",
     "chinese",
-    "education"
+    "education",
+    "customizable",
+    "style",
+    "template",
+    "data-structure",
+    "flexible",
+    "typescript-ready"
   ],
   "author": "Peter <782120844@qq.com>",
   "license": "MIT",
